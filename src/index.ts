@@ -202,8 +202,8 @@ app.post('/api/ask', async (c) => {
       return c.json({ error: 'Question is required' }, 400);
     }
 
-    // DifyのChat APIを呼び出し
-    const response = await fetch(`${c.env.DIFY_API_URL}/chat-messages`, {
+    // DifyのWorkflow APIを呼び出し
+    const response = await fetch(`${c.env.DIFY_API_URL}/workflows/run`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${c.env.DIFY_API_KEY}`,
@@ -211,8 +211,7 @@ app.post('/api/ask', async (c) => {
         ...getAccessHeaders(c.env),
       },
       body: JSON.stringify({
-        inputs: {},
-        query: question,
+        inputs: { input: question },
         response_mode: 'blocking',
         user: 'web-user',
       }),
@@ -220,11 +219,19 @@ app.post('/api/ask', async (c) => {
 
     const data = await response.json();
 
-    return c.json({
-      answer: data.answer,
-      conversation_id: data.conversation_id,
-      sources: data.metadata?.retriever_resources || [],
-    });
+    // Workflowの結果を返す
+    if (data.data?.status === 'succeeded') {
+      return c.json({
+        results: data.data.outputs?.result || [],
+        workflow_run_id: data.workflow_run_id,
+        elapsed_time: data.data.elapsed_time,
+      });
+    } else {
+      return c.json({
+        error: data.data?.error || 'Workflow failed',
+        status: data.data?.status,
+      }, 500);
+    }
   } catch (error) {
     console.error('RAG search error:', error);
     return c.json({ error: 'RAG search failed' }, 500);

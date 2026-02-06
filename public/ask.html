@@ -190,33 +190,39 @@
         
         const data = await response.json();
         
-        if (!response.ok) {
+        if (!response.ok || data.error) {
           answer.innerHTML = `<div class="error">エラー: ${data.error}</div>`;
+          return;
+        }
+        
+        const results = data.results || [];
+        
+        if (results.length === 0) {
+          answer.innerHTML = `<div class="answer-box"><p class="answer-content">関連する記事が見つかりませんでした。</p></div>`;
           return;
         }
         
         let html = `
           <div class="answer-box">
-            <p class="answer-label">💡 回答</p>
-            <div class="answer-content">${escapeHtml(data.answer)}</div>
-        `;
-        
-        if (data.sources && data.sources.length > 0) {
-          html += `
+            <p class="answer-label">📚 関連記事（${results.length}件）</p>
             <div class="sources">
-              <p class="sources-label">📚 参照した記事</p>
-              ${data.sources.map(source => `
+              ${results.map(item => `
                 <div class="source-item">
-                  <a href="${escapeHtml(source.url || '#')}" target="_blank" rel="noopener">
-                    ${escapeHtml(source.title || source.document_name || '記事')}
+                  <a href="${escapeHtml(item.url || '#')}" target="_blank" rel="noopener">
+                    ${escapeHtml(item.title || '記事')}
                   </a>
+                  ${item.tags && item.tags.length > 0 ? `
+                    <div style="margin-top: 6px; font-size: 11px; color: #888;">
+                      ${item.tags.slice(0, 5).map(t => `<span style="background: #f0f0f0; padding: 2px 8px; border-radius: 10px; margin-right: 4px;">${escapeHtml(t)}</span>`).join('')}
+                    </div>
+                  ` : ''}
+                  ${item.score ? `<div style="font-size: 11px; color: #aaa; margin-top: 4px;">スコア: ${(item.score * 100).toFixed(1)}%</div>` : ''}
                 </div>
               `).join('')}
             </div>
-          `;
-        }
-        
-        html += '</div>';
+            ${data.elapsed_time ? `<div style="font-size: 11px; color: #aaa; margin-top: 12px;">処理時間: ${data.elapsed_time.toFixed(2)}秒</div>` : ''}
+          </div>
+        `;
         answer.innerHTML = html;
         
       } catch (error) {
