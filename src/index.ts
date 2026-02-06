@@ -9,12 +9,23 @@ type Bindings = {
   COHERE_API_KEY: string;       // Cohere Embedding API
   DIFY_API_URL: string;         // Dify Chat API
   DIFY_API_KEY: string;         // Dify API Key
+  // Cloudflare Access Service Token
+  CF_ACCESS_CLIENT_ID: string;
+  CF_ACCESS_CLIENT_SECRET: string;
   // 設定
   RSS_TITLE: string;
   RSS_LINK: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+// Cloudflare Access用ヘッダーを取得
+function getAccessHeaders(env: Bindings): Record<string, string> {
+  return {
+    'CF-Access-Client-Id': env.CF_ACCESS_CLIENT_ID,
+    'CF-Access-Client-Secret': env.CF_ACCESS_CLIENT_SECRET,
+  };
+}
 
 // CORS設定
 app.use('/*', cors());
@@ -33,7 +44,10 @@ app.post('/api/articles', async (c) => {
     // n8nにwebhookで送信
     const response = await fetch(c.env.N8N_WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAccessHeaders(c.env),
+      },
       body: JSON.stringify({
         url: body.url,
         memo: body.memo || '',
@@ -64,17 +78,21 @@ app.get('/api/articles', async (c) => {
   try {
     const limit = parseInt(c.req.query('limit') || '50');
     
-    // Qdrantからユニークな記事を取得（chunk_index=0のみ）
+    // Qdrantからユニークな記事を取得（chunk_index=0のみ、日付降順）
     const response = await fetch(`${c.env.QDRANT_URL}/collections/articles/points/scroll`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAccessHeaders(c.env),
+      },
       body: JSON.stringify({
         limit: limit,
         with_payload: true,
         with_vector: false,
         filter: {
           must: [{ key: 'chunk_index', match: { value: 0 } }]
-        }
+        },
+        order_by: { key: 'scraped_at', direction: 'desc' }
       }),
     });
 
@@ -91,11 +109,6 @@ app.get('/api/articles', async (c) => {
       publish_rss: point.payload.publish_rss,
       scraped_at: point.payload.scraped_at,
     }));
-
-    // 日付でソート（新しい順）
-    articles.sort((a: any, b: any) => 
-      new Date(b.scraped_at).getTime() - new Date(a.scraped_at).getTime()
-    );
 
     return c.json({ articles });
   } catch (error) {
@@ -117,7 +130,7 @@ app.post('/api/search', async (c) => {
       return c.json({ error: 'Query is required' }, 400);
     }
 
-    // Cohereでクエリをembedding
+    // Cohereでクエリをembedding (Cohereは外部サービスなのでAccess不要)
     const embedResponse = await fetch('https://api.cohere.ai/v1/embed', {
       method: 'POST',
       headers: {
@@ -137,7 +150,10 @@ app.post('/api/search', async (c) => {
     // Qdrantで検索
     const searchResponse = await fetch(`${c.env.QDRANT_URL}/collections/articles/points/search`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAccessHeaders(c.env),
+      },
       body: JSON.stringify({
         vector: queryVector,
         limit: limit,
@@ -192,6 +208,7 @@ app.post('/api/ask', async (c) => {
       headers: {
         'Authorization': `Bearer ${c.env.DIFY_API_KEY}`,
         'Content-Type': 'application/json',
+        ...getAccessHeaders(c.env),
       },
       body: JSON.stringify({
         inputs: {},
@@ -219,10 +236,13 @@ app.post('/api/ask', async (c) => {
 // ========================================
 app.get('/feed.xml', async (c) => {
   try {
-    // Qdrantからpublish_rss=trueの記事を取得（chunk_index=0のみ）
+    // Qdrantからpublish_rss=trueの記事を取得（chunk_index=0のみ、日付降順）
     const response = await fetch(`${c.env.QDRANT_URL}/collections/articles/points/scroll`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAccessHeaders(c.env),
+      },
       body: JSON.stringify({
         limit: 50,
         with_payload: true,
@@ -232,7 +252,8 @@ app.get('/feed.xml', async (c) => {
             { key: 'chunk_index', match: { value: 0 } },
             { key: 'publish_rss', match: { value: true } }
           ]
-        }
+        },
+        order_by: { key: 'scraped_at', direction: 'desc' }
       }),
     });
 
@@ -246,11 +267,6 @@ app.get('/feed.xml', async (c) => {
       description: point.payload.summary || point.payload.memo || '',
       read_at: point.payload.scraped_at,
     }));
-
-    // 日付でソート
-    articles.sort((a: any, b: any) => 
-      new Date(b.read_at).getTime() - new Date(a.read_at).getTime()
-    );
 
     const rssXml = generateRSS(
       articles,
