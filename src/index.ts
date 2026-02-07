@@ -104,6 +104,7 @@ app.get('/api/articles', async (c) => {
       title: point.payload.title,
       url: point.payload.url,
       summary: point.payload.summary,
+      full_content: point.payload.full_content || '',
       tags: point.payload.tags || [],
       memo: point.payload.memo || '',
       publish_rss: point.payload.publish_rss,
