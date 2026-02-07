@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>記事一覧 - Article Search</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 40px 20px;
       background: #f5f5f5;
@@ -20,7 +21,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    h1 { color: #333; margin-bottom: 30px; font-size: 28px; }
+    h1 { color: #333; margin-bottom: 20px; font-size: 28px; }
     .nav {
       margin-bottom: 20px;
       padding-bottom: 20px;
@@ -33,19 +34,115 @@
       font-size: 14px;
     }
     .nav a:hover { text-decoration: underline; }
+    
+    /* 検索ボックス */
+    .search-box {
+      margin-bottom: 20px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #007aff;
+    }
+    
+    /* タグクラウド */
+    .tag-cloud {
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .tag-cloud-title {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tag-cloud-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cloud-tag {
+      background: #e8f4fd;
+      color: #007aff;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .cloud-tag:hover {
+      background: #d0e8fa;
+    }
+    .cloud-tag.active {
+      background: #007aff;
+      color: white;
+    }
+    .cloud-tag .count {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+    .clear-filter {
+      background: #f0f0f0;
+      color: #666;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+    }
+    .clear-filter:hover {
+      background: #e0e0e0;
+    }
+    
+    /* フィルタ状態 */
+    .filter-status {
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    /* 記事リスト */
     .article-list { list-style: none; }
     .article-item {
       padding: 20px 0;
       border-bottom: 1px solid #f0f0f0;
     }
     .article-item:last-child { border-bottom: none; }
+    .article-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
     .article-title {
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 8px;
+      flex: 1;
     }
     .article-title a { color: #333; text-decoration: none; }
     .article-title a:hover { color: #007aff; }
+    .expand-btn {
+      background: #f0f0f0;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .expand-btn:hover { background: #e0e0e0; }
     .article-summary {
       color: #666;
       font-size: 14px;
@@ -67,6 +164,10 @@
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 11px;
+      cursor: pointer;
+    }
+    .tag:hover {
+      background: #d0e8fa;
     }
     .rss-badge {
       background: #ffeaa7;
@@ -75,21 +176,60 @@
       border-radius: 4px;
       font-size: 11px;
     }
-    .loading {
+    
+    /* 記事内容（Markdown） */
+    .article-content {
+      margin-top: 16px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      display: none;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .article-content.show {
+      display: block;
+    }
+    .article-content h1, .article-content h2, .article-content h3 {
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+    .article-content p {
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+    .article-content ul, .article-content ol {
+      margin-left: 24px;
+      margin-bottom: 12px;
+    }
+    .article-content code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .article-content pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 12px;
+    }
+    .article-content pre code {
+      background: none;
+      padding: 0;
+    }
+    .article-content a {
+      color: #007aff;
+    }
+    
+    .loading, .error, .empty {
       text-align: center;
       padding: 40px;
       color: #999;
     }
-    .error {
-      text-align: center;
-      padding: 40px;
-      color: #ff3b30;
-    }
-    .empty {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-    }
+    .error { color: #ff3b30; }
   </style>
 </head>
 <body>
@@ -103,17 +243,54 @@
     
     <h1>📋 記事一覧</h1>
     
+    <!-- 検索ボックス -->
+    <div class="search-box">
+      <input type="text" class="search-input" id="searchInput" placeholder="タイトルや要約で検索...">
+    </div>
+    
+    <!-- タグクラウド -->
+    <div class="tag-cloud" id="tagCloud" style="display: none;">
+      <div class="tag-cloud-title">🏷️ タグで絞り込み</div>
+      <div class="tag-cloud-tags" id="tagCloudTags"></div>
+    </div>
+    
+    <!-- フィルタ状態 -->
+    <div class="filter-status" id="filterStatus" style="display: none;"></div>
+    
     <div id="content">
       <div class="loading">読み込み中...</div>
     </div>
   </div>
 
   <script>
+    // ストップワード（非表示にするタグ）
+    const STOP_WORDS = new Set([
+      'cookie', 'cookies', 'プライバシー', '設定', '広告', 'privacy',
+      '利用規約', 'terms', 'ポリシー', 'policy'
+    ]);
+    
+    // タグ正規化
+    function normalizeTag(tag) {
+      if (!tag) return '';
+      return tag.trim();
+    }
+    
+    // ストップワードチェック
+    function isStopWord(tag) {
+      return STOP_WORDS.has(tag.toLowerCase());
+    }
+    
+    // グローバル状態
+    let allArticles = [];
+    let selectedTags = new Set();
+    let searchQuery = '';
+    
+    // 記事読み込み
     async function loadArticles() {
       const content = document.getElementById('content');
       
       try {
-        const response = await fetch('/api/articles');
+        const response = await fetch('/api/articles?limit=100');
         const data = await response.json();
         
         if (!response.ok) {
@@ -121,39 +298,168 @@
           return;
         }
         
-        const articles = data.articles || [];
+        allArticles = data.articles || [];
         
-        if (articles.length === 0) {
+        if (allArticles.length === 0) {
           content.innerHTML = '<div class="empty">まだ記事がありません</div>';
           return;
         }
         
-        const html = `
-          <ul class="article-list">
-            ${articles.map(article => `
-              <li class="article-item">
+        renderTagCloud();
+        renderArticles();
+      } catch (error) {
+        content.innerHTML = `<div class="error">読み込みエラー: ${error.message}</div>`;
+      }
+    }
+    
+    // タグクラウド描画
+    function renderTagCloud() {
+      const tagCounts = {};
+      
+      allArticles.forEach(article => {
+        (article.tags || []).forEach(tag => {
+          const normalized = normalizeTag(tag);
+          if (normalized && !isStopWord(normalized)) {
+            tagCounts[normalized] = (tagCounts[normalized] || 0) + 1;
+          }
+        });
+      });
+      
+      const sortedTags = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20);
+      
+      if (sortedTags.length === 0) {
+        document.getElementById('tagCloud').style.display = 'none';
+        return;
+      }
+      
+      const tagsHtml = sortedTags.map(([tag, count]) => `
+        <span class="cloud-tag ${selectedTags.has(tag) ? 'active' : ''}" 
+              onclick="toggleTag('${escapeHtml(tag)}')">${escapeHtml(tag)}<span class="count">(${count})</span></span>
+      `).join('');
+      
+      document.getElementById('tagCloudTags').innerHTML = tagsHtml + 
+        (selectedTags.size > 0 ? '<button class="clear-filter" onclick="clearTags()">クリア</button>' : '');
+      document.getElementById('tagCloud').style.display = 'block';
+    }
+    
+    // タグ選択トグル
+    function toggleTag(tag) {
+      if (selectedTags.has(tag)) {
+        selectedTags.delete(tag);
+      } else {
+        selectedTags.add(tag);
+      }
+      renderTagCloud();
+      renderArticles();
+    }
+    
+    // タグフィルタクリア
+    function clearTags() {
+      selectedTags.clear();
+      renderTagCloud();
+      renderArticles();
+    }
+    
+    // 記事フィルタリング
+    function filterArticles() {
+      return allArticles.filter(article => {
+        // テキスト検索
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const titleMatch = (article.title || '').toLowerCase().includes(query);
+          const summaryMatch = (article.summary || '').toLowerCase().includes(query);
+          if (!titleMatch && !summaryMatch) return false;
+        }
+        
+        // タグフィルタ
+        if (selectedTags.size > 0) {
+          const articleTags = (article.tags || []).map(t => normalizeTag(t));
+          const hasAllTags = [...selectedTags].every(tag => articleTags.includes(tag));
+          if (!hasAllTags) return false;
+        }
+        
+        return true;
+      });
+    }
+    
+    // 記事一覧描画
+    function renderArticles() {
+      const filtered = filterArticles();
+      const content = document.getElementById('content');
+      const filterStatus = document.getElementById('filterStatus');
+      
+      // フィルタ状態表示
+      if (searchQuery || selectedTags.size > 0) {
+        filterStatus.style.display = 'block';
+        filterStatus.textContent = `${filtered.length}件 / ${allArticles.length}件`;
+      } else {
+        filterStatus.style.display = 'none';
+      }
+      
+      if (filtered.length === 0) {
+        content.innerHTML = '<div class="empty">該当する記事がありません</div>';
+        return;
+      }
+      
+      const html = `
+        <ul class="article-list">
+          ${filtered.map((article, index) => `
+            <li class="article-item">
+              <div class="article-header">
                 <h2 class="article-title">
                   <a href="${escapeHtml(article.url)}" target="_blank" rel="noopener">${escapeHtml(article.title)}</a>
                 </h2>
-                ${article.summary ? `<p class="article-summary">${escapeHtml(article.summary)}</p>` : ''}
-                <div class="article-meta">
-                  <span>${formatDate(article.scraped_at)}</span>
-                  ${article.publish_rss ? '<span class="rss-badge">RSS</span>' : ''}
-                  ${article.tags && article.tags.length > 0 ? `
-                    <div class="article-tags">
-                      ${article.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-                    </div>
-                  ` : ''}
+                ${article.full_content ? `
+                  <button class="expand-btn" onclick="toggleContent(${index})">
+                    📄 内容を見る
+                  </button>
+                ` : ''}
+              </div>
+              ${article.summary ? `<p class="article-summary">${escapeHtml(article.summary)}</p>` : ''}
+              <div class="article-meta">
+                <span>${formatDate(article.scraped_at)}</span>
+                ${article.publish_rss ? '<span class="rss-badge">RSS</span>' : ''}
+                ${article.tags && article.tags.length > 0 ? `
+                  <div class="article-tags">
+                    ${article.tags
+                      .map(t => normalizeTag(t))
+                      .filter(t => t && !isStopWord(t))
+                      .map(tag => `<span class="tag" onclick="toggleTag('${escapeHtml(tag)}')">${escapeHtml(tag)}</span>`)
+                      .join('')}
+                  </div>
+                ` : ''}
+              </div>
+              ${article.memo ? `<p class="article-summary" style="margin-top: 8px; font-style: italic;">📝 ${escapeHtml(article.memo)}</p>` : ''}
+              ${article.full_content ? `
+                <div class="article-content" id="content-${index}">
+                  ${renderMarkdown(article.full_content)}
                 </div>
-                ${article.memo ? `<p class="article-summary" style="margin-top: 8px; font-style: italic;">📝 ${escapeHtml(article.memo)}</p>` : ''}
-              </li>
-            `).join('')}
-          </ul>
-        `;
-        
-        content.innerHTML = html;
-      } catch (error) {
-        content.innerHTML = `<div class="error">読み込みエラー: ${error.message}</div>`;
+              ` : ''}
+            </li>
+          `).join('')}
+        </ul>
+      `;
+      
+      content.innerHTML = html;
+    }
+    
+    // 記事内容の展開/折りたたみ
+    function toggleContent(index) {
+      const contentEl = document.getElementById(`content-${index}`);
+      if (contentEl) {
+        contentEl.classList.toggle('show');
+      }
+    }
+    
+    // Markdown描画
+    function renderMarkdown(text) {
+      if (!text) return '';
+      try {
+        return marked.parse(text);
+      } catch (e) {
+        return escapeHtml(text);
       }
     }
     
@@ -176,6 +482,13 @@
       });
     }
     
+    // 検索入力イベント
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      renderArticles();
+    });
+    
+    // 初期化
     loadArticles();
   </script>
 </body>
