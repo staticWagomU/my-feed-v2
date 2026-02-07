@@ -5,143 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <title>質問 - Article Search</title>
+  <link rel="stylesheet" href="/common.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    :root {
-      --primary: #007aff;
-      --primary-light: #e8f4fd;
-      --text: #1a1a1a;
-      --text-secondary: #666;
-      --text-muted: #999;
-      --bg: #f5f5f7;
-      --card: #ffffff;
-      --border: #e5e5e5;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      padding-bottom: calc(70px + var(--safe-bottom));
-    }
-    
-    .header {
-      position: sticky;
-      top: 0;
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
-      z-index: 100;
-      padding: 12px 16px;
-    }
-    .header h1 {
-      font-size: 20px;
-      font-weight: 700;
-    }
-    
-    .main {
-      padding: 16px;
-      max-width: 680px;
-      margin: 0 auto;
-    }
-    
-    .help-text {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
-    
-    /* 質問フォーム */
     .ask-form {
-      margin-bottom: 24px;
+      margin-bottom: var(--space-lg);
     }
-    .ask-input {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      background: var(--card);
-      border-radius: var(--radius);
-      font-size: 16px;
-      box-shadow: var(--shadow);
-      -webkit-appearance: none;
-      resize: vertical;
-      min-height: 120px;
-      font-family: inherit;
-      line-height: 1.6;
-    }
-    .ask-input:focus {
-      outline: none;
-      box-shadow: var(--shadow), 0 0 0 2px var(--primary);
-    }
-    .ask-btn {
-      width: 100%;
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 16px;
-      border-radius: var(--radius);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
+    .ask-form .btn {
       margin-top: 12px;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .ask-btn:active {
-      opacity: 0.8;
-    }
-    .ask-btn:disabled {
-      background: var(--border);
-      color: var(--text-muted);
     }
     
-    /* 例文 */
     .examples {
-      margin-top: 20px;
+      margin-top: var(--space-lg);
     }
-    .examples-title {
+    .examples__title {
       font-size: 13px;
-      color: var(--text-muted);
+      color: var(--color-text-muted);
       margin-bottom: 10px;
     }
-    .example-tags {
+    .examples__list {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: var(--space-sm);
     }
     .example-btn {
-      background: var(--card);
-      color: var(--text-secondary);
-      padding: 10px 16px;
-      border-radius: 20px;
+      background: var(--color-card);
+      color: var(--color-text-secondary);
+      padding: 10px var(--space-md);
+      border-radius: var(--radius-full);
       font-size: 14px;
       cursor: pointer;
       border: none;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-sm);
       -webkit-tap-highlight-color: transparent;
     }
-    .example-btn:active {
-      background: var(--border);
-    }
+    .example-btn:active { background: var(--color-border); }
     
-    /* 回答 */
-    .answer-box {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-    .answer-label {
+    .answer__label {
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--color-text-muted);
       margin-bottom: 12px;
     }
     .results-list {
@@ -151,115 +53,41 @@
     }
     .result-item {
       padding: 14px;
-      background: var(--bg);
-      border-radius: var(--radius-sm);
+      background: var(--color-bg);
+      border-radius: var(--radius-md);
     }
     .result-item a {
-      color: var(--primary);
+      color: var(--color-primary);
       text-decoration: none;
       font-weight: 500;
       font-size: 15px;
       line-height: 1.4;
       display: block;
     }
-    .result-item a:active {
-      opacity: 0.7;
-    }
-    .result-tags {
+    .result-item a:active { opacity: 0.7; }
+    .result-item__tags {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 8px;
+      margin-top: var(--space-sm);
     }
-    .tag {
-      background: var(--primary-light);
-      color: var(--primary);
-      padding: 3px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-    }
-    .result-score {
+    .result-item__score {
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--color-text-muted);
       margin-top: 6px;
     }
     .elapsed-time {
       font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 16px;
+      color: var(--color-text-muted);
+      margin-top: var(--space-md);
       text-align: right;
-    }
-    
-    .loading, .empty, .error {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-    }
-    .error { color: #dc3545; }
-    
-    /* ボトムナビ */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-around;
-      padding: 8px 0;
-      padding-bottom: calc(8px + var(--safe-bottom));
-      z-index: 100;
-    }
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 8px 16px;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 10px;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .nav-item.active { color: var(--primary); }
-    .nav-item:active { opacity: 0.7; }
-    .nav-icon {
-      font-size: 22px;
-      margin-bottom: 2px;
-    }
-    
-    @media (min-width: 768px) {
-      .main { padding: 24px; }
-      .bottom-nav { display: none; }
-      body { padding-bottom: 0; }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 24px;
-      }
-      .desktop-nav {
-        display: flex;
-        gap: 24px;
-      }
-      .desktop-nav a {
-        color: var(--text-secondary);
-        text-decoration: none;
-        font-size: 14px;
-      }
-      .desktop-nav a:hover { color: var(--primary); }
-    }
-    @media (max-width: 767px) {
-      .desktop-nav { display: none; }
     }
   </style>
 </head>
 <body>
   <header class="header">
     <h1>💬 記事に質問</h1>
-    <nav class="desktop-nav">
+    <nav class="header-nav">
       <a href="/">📝 追加</a>
       <a href="/articles.html">📋 一覧</a>
       <a href="/search.html">🔍 検索</a>
@@ -268,18 +96,18 @@
   </header>
   
   <main class="main">
-    <p class="help-text">登録した記事をもとに関連する記事を検索します</p>
+    <p class="text-muted text-sm mb-md">登録した記事をもとに関連する記事を検索します</p>
     
     <form class="ask-form" id="askForm">
-      <textarea class="ask-input" id="question" placeholder="質問を入力してください..." required></textarea>
-      <button type="submit" class="ask-btn" id="askBtn">質問する</button>
+      <textarea class="textarea" id="question" placeholder="質問を入力してください..." required></textarea>
+      <button type="submit" class="btn btn--primary btn--full" id="askBtn">質問する</button>
     </form>
     
     <div id="answer"></div>
     
     <div class="examples">
-      <p class="examples-title">質問の例</p>
-      <div class="example-tags">
+      <p class="examples__title">質問の例</p>
+      <div class="examples__list">
         <button type="button" class="example-btn" onclick="setQuestion('A2Aプロトコルについて教えて')">A2Aプロトコル</button>
         <button type="button" class="example-btn" onclick="setQuestion('AIエージェントに関する記事')">AIエージェント</button>
         <button type="button" class="example-btn" onclick="setQuestion('最近のAWS関連ニュース')">AWS</button>
@@ -288,13 +116,16 @@
   </main>
   
   <nav class="bottom-nav">
-    <a href="/" class="nav-item"><span class="nav-icon">📝</span>追加</a>
-    <a href="/articles.html" class="nav-item"><span class="nav-icon">📋</span>一覧</a>
-    <a href="/search.html" class="nav-item"><span class="nav-icon">🔍</span>検索</a>
-    <a href="/ask.html" class="nav-item active"><span class="nav-icon">💬</span>質問</a>
+    <a href="/" class="bottom-nav__item"><span class="bottom-nav__icon">📝</span>追加</a>
+    <a href="/articles.html" class="bottom-nav__item"><span class="bottom-nav__icon">📋</span>一覧</a>
+    <a href="/search.html" class="bottom-nav__item"><span class="bottom-nav__icon">🔍</span>検索</a>
+    <a href="/ask.html" class="bottom-nav__item bottom-nav__item--active"><span class="bottom-nav__icon">💬</span>質問</a>
   </nav>
 
   <script>
+    const STOP_WORDS = new Set(['cookie', 'cookies', 'プライバシー', '設定', '広告', 'privacy', '利用規約', 'terms', 'ポリシー', 'policy']);
+    function isStopWord(tag) { return STOP_WORDS.has((tag || '').toLowerCase()); }
+    
     function setQuestion(text) {
       document.getElementById('question').value = text;
       document.getElementById('question').focus();
@@ -311,7 +142,7 @@
       
       askBtn.disabled = true;
       askBtn.textContent = '検索中...';
-      answer.innerHTML = '<div class="loading">関連記事を検索中...</div>';
+      answer.innerHTML = '<div class="state">関連記事を検索中...</div>';
       
       try {
         const response = await fetch('/api/ask', {
@@ -323,20 +154,20 @@
         const data = await response.json();
         
         if (!response.ok || data.error) {
-          answer.innerHTML = `<div class="error">エラー: ${data.error}</div>`;
+          answer.innerHTML = `<div class="state state--error">エラー: ${data.error}</div>`;
           return;
         }
         
         const results = data.results || [];
         
         if (results.length === 0) {
-          answer.innerHTML = `<div class="answer-box"><p class="empty">関連する記事が見つかりませんでした。</p></div>`;
+          answer.innerHTML = `<div class="card"><p class="state">関連する記事が見つかりませんでした。</p></div>`;
           return;
         }
         
         answer.innerHTML = `
-          <div class="answer-box">
-            <p class="answer-label">📚 関連記事（${results.length}件）</p>
+          <div class="card">
+            <p class="answer__label">📚 関連記事（${results.length}件）</p>
             <div class="results-list">
               ${results.map(item => `
                 <div class="result-item">
@@ -344,11 +175,11 @@
                     ${escapeHtml(item.title || '記事')}
                   </a>
                   ${item.tags && item.tags.length > 0 ? `
-                    <div class="result-tags">
-                      ${item.tags.filter(t => !isStopWord(t)).slice(0, 5).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+                    <div class="result-item__tags">
+                      ${item.tags.filter(t => !isStopWord(t)).slice(0, 5).map(t => `<span class="tag tag--badge">${escapeHtml(t)}</span>`).join('')}
                     </div>
                   ` : ''}
-                  ${item.score ? `<div class="result-score">スコア: ${(item.score * 100).toFixed(1)}%</div>` : ''}
+                  ${item.score ? `<div class="result-item__score">スコア: ${(item.score * 100).toFixed(1)}%</div>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -356,17 +187,12 @@
           </div>
         `;
       } catch (error) {
-        answer.innerHTML = `<div class="error">エラー: ${error.message}</div>`;
+        answer.innerHTML = `<div class="state state--error">エラー: ${error.message}</div>`;
       } finally {
         askBtn.disabled = false;
         askBtn.textContent = '質問する';
       }
     });
-    
-    const STOP_WORDS = new Set(['cookie', 'cookies', 'プライバシー', '設定', '広告', 'privacy', '利用規約', 'terms', 'ポリシー', 'policy']);
-    function isStopWord(tag) {
-      return STOP_WORDS.has((tag || '').toLowerCase());
-    }
     
     function escapeHtml(text) {
       if (!text) return '';
